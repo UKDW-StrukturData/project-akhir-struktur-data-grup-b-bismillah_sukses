@@ -15,15 +15,15 @@ if 'username' not in st.session_state:
 
 
 def login_form():
-    st.title("PRIORITIZE: NEWS RANKER")
+    st.title("GoodNews")
     st.image('logo.jpg')
-    st.subheader("Login Pengguna")
+    st.subheader("Login Terlebih Dahulu")
     st.markdown("---")
     
     with st.form("login_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("LOGIN")
+        submitted = st.form_submit_button("LOGIN"), primaryColor="#FA0000"
         
         if submitted:
             with st.spinner("Memproses Login..."):
@@ -38,7 +38,7 @@ def login_form():
                     st.error("Username atau Password salah. Coba: user1/pass1")
 
 def history_page():
-    st.title("💾 History Pencarian Offline")
+    st.title("History Pencarian Offline")
     st.info("Riwayat ini dimuat dari file 'search_history.json' (simulasi data offline).")
     
     history_data = st.session_state.history_service.get_history()
@@ -72,10 +72,10 @@ def main_app():
     if page_selection == "History":
         history_page()
     else:
-        st.title("PRIORITIZE: NEWS RANKER (Menu Utama)")
-        st.header("Home/Menu - Trending Topics")
+        st.title("GoodNews (Menu Utama)")
+        st.header("Home/Menu - Trending Topik Hari ini")
         st.markdown("---")
-        st.info("Halaman ini adalah placeholder. Fitur inti akan dikerjakan di Minggu 2 dan 3.")
+        st.info("Ini masih dalam tahap percobaan")
 
 
 if st.session_state.logged_in:
