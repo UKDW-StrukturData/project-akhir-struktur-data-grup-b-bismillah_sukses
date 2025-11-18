@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from backend_logic import AuthService, SearchHistory, NewsArticle 
-from datetime import datetime
+from datetime import datetime, timedelta
 import time 
 
 if 'auth_service' not in st.session_state:
@@ -74,7 +74,7 @@ def main_app():
         st.title("PRIORITIZE: NEWS RANKER (Menu Utama)")
         st.header("Home/Menu - Trending Topics")
         st.markdown("---")
-        st.info("Fitur inti **Priority Queue** dan **Integrasi API** akan dikerjakan dan didemokan di sini pada Minggu 2 dan 3.")
+        st.info("")
         st.warning("Saat ini, halaman ini hanya menampilkan placeholder.")
 
 

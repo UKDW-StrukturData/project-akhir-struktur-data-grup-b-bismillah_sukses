@@ -24,13 +24,12 @@ class AuthService:
 
 class SearchHistory:
     """Mengelola riwayat pencarian (disimpan ke file JSON lokal)."""
+
     def __init__(self, history_file="search_history.json"):
-        self.history_file = history_file
-        self.history: List[Dict[str, Any]] = self._load_history()
-      
+    
         if not self.history:
             self.history.append({"query": "Contoh: Kebijakan Energi", "category": "Politik", "timestamp": datetime.now().isoformat()})
-            self.history.append({"query": "Contoh: AI di Indonesia", "category": "Teknologi", "timestamp": (datetime.now() - timedelta(days=1)).isoformat()})
+            self.history.append({"query": "Contoh: AI di Indonesia", "category": "Teknologi", "timestamp": (datetime.now() - timedelta(days=1)).isoformat()}) 
             self._save_history() 
 
     def _load_history(self):
