@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
-from backend_logic import AuthService, SearchHistory, NewsArticle 
-from datetime import datetime, timedelta
-import time 
+from backend_logic import AuthService, SearchHistory
+from datetime import datetime
+import time
 
 if 'auth_service' not in st.session_state:
     st.session_state.auth_service = AuthService()
@@ -13,9 +13,10 @@ if 'logged_in' not in st.session_state:
 if 'username' not in st.session_state:
     st.session_state.username = ""
 
+
 def login_form():
     st.title("PRIORITIZE: NEWS RANKER")
-    st.subheader("Selamat Datang")
+    st.subheader("Login Pengguna")
     st.markdown("---")
     
     with st.form("login_form"):
@@ -33,7 +34,7 @@ def login_form():
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.error("Username atau Password salah.")
+                    st.error("Username atau Password salah. Coba: user1/pass1")
 
 def history_page():
     st.title("💾 History Pencarian Offline")
@@ -46,14 +47,13 @@ def history_page():
         return
 
     df = pd.DataFrame(history_data)
-    df['timestamp'] = pd.to_datetime(df['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
     df = df[['timestamp', 'query']]
     df.columns = ['Waktu Pencarian', 'Kata Kunci']
     
     st.dataframe(df, use_container_width=True, height=300)
     
     st.markdown("---")
-    if st.button("Clear All History", help="Menghapus semua entri di file JSON lokal."):
+    if st.button("Clear All History"):
         st.session_state.history_service.clear_history()
         st.success("Semua riwayat pencarian berhasil dihapus.")
         st.rerun()
@@ -74,8 +74,7 @@ def main_app():
         st.title("PRIORITIZE: NEWS RANKER (Menu Utama)")
         st.header("Home/Menu - Trending Topics")
         st.markdown("---")
-        st.info("")
-        st.warning("Saat ini, halaman ini hanya menampilkan placeholder.")
+        st.info("Halaman ini adalah placeholder. Fitur inti akan dikerjakan di Minggu 2 dan 3.")
 
 
 if st.session_state.logged_in:
