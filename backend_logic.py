@@ -1,7 +1,8 @@
 import json
 import os
-from datetime import datetime
-from typing import List, Dict, Any
+from datetime import datetime, timedelta 
+from typing import List, Dict, Any 
+
 
 
 class NewsArticle:
@@ -22,19 +23,17 @@ class AuthService:
         return self.users.get(username) == password
 
 
-class SearchHistory:
-    """Mengelola riwayat pencarian (disimpan ke file JSON lokal)."""
+
     def __init__(self, history_file="search_history.json"):
         self.history_file = history_file
-        self.history: List[Dict[str, Any]] = [] 
-        loaded_history = self._load_history()
-        if loaded_history is not None:
-             self.history = loaded_history
+        self.history: List[Dict[str, Any]] = self._load_history()
+        
 
         if not self.history:
             self.history.append({"query": "Contoh: Kebijakan Energi", "category": "Politik", "timestamp": datetime.now().isoformat()})
-            self.history.append({"query": "Contoh: AI di Indonesia", "category": "Teknologi", "timestamp": (datetime.now() - timedelta(days=1)).isoformat()})
-            self._save_history() 
+            
+            self.history.append({"query": "Contoh: AI di Indonesia", "category": "Teknologi", "timestamp": (datetime.now() - timedelta(days=1)).isoformat()}) 
+            self._save_history()
 
     def _load_history(self):
         """Memuat riwayat pencarian dari file."""
