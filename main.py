@@ -16,7 +16,7 @@ if 'username' not in st.session_state:
 
 def login_form():
     st.title("PRIORITIZE: NEWS RANKER")
-    st.image('/workspaces/project-akhir-struktur-data-grup-b-bismillah_sukses/logo.jpg')
+    st.image('logo.jpg')
     st.subheader("Login Pengguna")
     st.markdown("---")
     
