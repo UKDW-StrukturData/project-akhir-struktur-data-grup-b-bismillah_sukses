@@ -23,7 +23,7 @@ def login_form():
     with st.form("login_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("LOGIN"), primaryColor="#FA0000"
+        submitted = st.form_submit_button("LOGIN", primaryColor="#FA0000")
         
         if submitted:
             with st.spinner("Memproses Login..."):
