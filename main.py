@@ -84,7 +84,7 @@ def login_register_page():
 
 
 def history_page():
-    st.title("💾 History Pencarian Offline")
+    st.title("History Pencarian Offline")
     st.info("Riwayat ini dimuat dari file 'search_history.json'.")
     
     history_data = st.session_state.controller.history.get_history()
