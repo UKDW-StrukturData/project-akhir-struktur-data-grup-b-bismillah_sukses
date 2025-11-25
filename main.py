@@ -57,21 +57,16 @@ def login_register_page():
                         else:
                             st.error("Username atau Password salah.")
         
-        else: # Daftar Akun Baru
-            # --- Form REGISTER ---
+        else: 
             with st.form("register_form"):
                 
-                # VARIBEL HANYA DIDEFINISIKAN DI DALAM FORM
                 new_username = st.text_input("Username Baru", key="register_username")
                 new_password = st.text_input("Password Baru", type="password", key="register_password")
                 confirm_password = st.text_input("Konfirmasi Password", type="password", key="confirm_password")
                 
                 submitted_register = st.form_submit_button("DAFTAR", type='secondary')
 
-                # LOGIKA HANYA DIJALANKAN JIKA TOMBOL DI-SUBMIT
                 if submitted_register:
-                    # Baris 66 Anda (if new_password != confirm_password) sekarang aman
-                    # karena hanya dieksekusi setelah tombol diklik.
                     if new_password != confirm_password:
                         st.error("Password dan Konfirmasi Password tidak cocok.")
                     else:
