@@ -1,5 +1,10 @@
 [
     {
+        "query": "gempa",
+        "category": "Umum",
+        "timestamp": "2025-11-25T01:42:02.494524"
+    },
+    {
         "query": "Contoh: Kebijakan Energi",
         "category": "Politik",
         "timestamp": "2025-11-25T00:05:33.674099"

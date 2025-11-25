@@ -1,104 +1,195 @@
+import requests 
 import json
 import os
+import heapq 
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
+GNEWS_API_KEY = os.environ.get("GNEWS_API_KEY", "53f3ef696a45c7bd315a69eb3792cdb1")
 
-class NewsArticle: 
-    pass
-
-class NewsPriorityQueue: 
-    pass
-
-class Trie:
-    pass
-
-class GNewsAPIClient:
-    pass
 
 class GeminiSummarizer:
     pass
 
+class NewsArticle:
+    """Representasi artikel berita."""
+    def __init__(self, title, description, url, published_at, source_name, content, image_url="", score=0):
+        self.title = title
+        self.description = description
+        self.url = url
+        self.published_at = published_at
+        self.source_name = source_name
+        self.content = content 
+        self.image_url = image_url
+        self.score = score
+
+    def __lt__(self, other):
+        """Max Heap: Skor lebih tinggi dianggap 'lebih kecil' (prioritas lebih tinggi)."""
+        return self.score > other.score
+
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "description": self.description,
+            "url": self.url,
+            "published_at": self.published_at.isoformat() if self.published_at else None,
+            "source_name": self.source_name,
+            "score": self.score,
+            "content": self.content
+        }
+
+class NewsPriorityQueue:
+    """Priority Queue (Max Heap) untuk artikel berita."""
+    def __init__(self):
+        self._heap = [] 
+
+    def push(self, article: NewsArticle):
+        heapq.heappush(self._heap, article)
+
+    def size(self) -> int:
+        return len(self._heap)
+
+    def get_all_articles(self) -> List[NewsArticle]:
+        """Mengembalikan semua artikel dalam urutan prioritas tanpa mengubah heap."""
+        temp_list = [heapq.heappop(self._heap) for _ in range(len(self._heap))]
+        all_articles = temp_list.copy()
+        for article in temp_list:
+            heapq.heappush(self._heap, article)
+        return all_articles
+
 
 class AuthService:
-    """Layanan otentikasi sederhana dengan penyimpanan pengguna di file JSON."""
     def __init__(self, users_file="users.json"):
         self.users_file = users_file
         self.users = self._load_users()
-        
         if not self.users:
             self.users = {"user1": "pass1", "admin": "admin123", "praktikum": "strukturdata"}
             self._save_users()
-
     def _load_users(self):
+        """Memuat data pengguna dari file JSON."""
         if os.path.exists(self.users_file):
             try:
-                with open(self.users_file, "r") as f:
+                with open(self.users_file, "r") as f: 
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
                 return {}
         return {}
-
     def _save_users(self):
-        with open(self.users_file, "w") as f:
-            json.dump(self.users, f, indent=4)
-
-    def login(self, username, password):
-        return self.users.get(username) == password
-
+        with open(self.users_file, "w") as f: json.dump(self.users, f, indent=4)
+    def login(self, username, password): return self.users.get(username) == password
     def register(self, username, password):
-        if not username or not password:
-            return False, "Username dan password tidak boleh kosong."
-        if username in self.users:
-            return False, "Username sudah terdaftar. Silakan pilih username lain."
-        
-        self.users[username] = password
-        self._save_users()
-        return True, "Pendaftaran berhasil! Silakan login."
+        if not username or not password: return False, "Username dan password tidak boleh kosong."
+        if username in self.users: return False, "Username sudah terdaftar. Silakan pilih username lain."
+        self.users[username] = password; self._save_users(); return True, "Pendaftaran berhasil! Silakan login."
 
 
 class SearchHistory:
-    """Mengelola riwayat pencarian (disimpan ke file JSON lokal)."""
     def __init__(self, history_file="search_history.json"):
         self.history_file = history_file
         self.history: List[Dict[str, Any]] = self._load_history()
-        
         if not self.history:
             self.history.append({"query": "Contoh: Kebijakan Energi", "category": "Politik", "timestamp": (datetime.now() - timedelta(hours=1)).isoformat()})
             self.history.append({"query": "Contoh: AI di Indonesia", "category": "Teknologi", "timestamp": (datetime.now() - timedelta(days=1)).isoformat()})
             self._save_history() 
-
     def _load_history(self):
         if os.path.exists(self.history_file):
             try:
                 with open(self.history_file, "r") as f:
                     return json.load(f)
             except Exception:
-                return []
-        return []
-
+                return {}
+        return {}
     def _save_history(self):
-        with open(self.history_file, "w") as f:
-            json.dump(self.history, f, indent=4)
+        with open(self.history_file, "w") as f: json.dump(self.history, f, indent=4)
+    def add_to_history(self, query: str, category: str = None):
+        entry = {"query": query, "category": category, "timestamp": datetime.now().isoformat()}
+        if not any(e["query"].lower() == query.lower() for e in self.history):
+            self.history.insert(0, entry); self._save_history()
+    def get_history(self) -> List[Dict[str, Any]]: return self.history
+    def clear_history(self): self.history = []; self._save_history()
 
-    def get_history(self) -> List[Dict[str, Any]]:
-        return self.history
 
-    def clear_history(self):
-        self.history = []
-        self._save_history()
+class GNewsAPIClient:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = "https://gnews.io/api/v4/search"
+
+    def _calculate_score(self, article_data: Dict[str, Any], query: str) -> int:
+        score = 0
+        published_at_str = article_data.get("publishedAt")
+        if published_at_str:
+            try:
+                published_datetime = datetime.fromisoformat(published_at_str.replace('Z', '+00:00'))
+                time_diff = datetime.now(published_datetime.tzinfo) - published_datetime
+                score += max(0, 1000 - int(time_diff.total_seconds() / 3600)) 
+            except ValueError:
+                pass
+        title = article_data.get("title", "").lower()
+        description = article_data.get("description", "").lower()
+        query_lower = query.lower()
+        if query_lower in title: score += 200 
+        if query_lower in description: score += 50
+        return score
+
+    def get_and_prioritize_news(self, query: str, lang="id", country="id", max_results=10) -> NewsPriorityQueue:
+        params = {
+            "q": query, "lang": lang, "country": country, "max": max_results, "apikey": self.api_key
+        }
+        pq = NewsPriorityQueue()
+        if not self.api_key or self.api_key == "YOUR_GNEWS_API_KEY_HERE":
+            return pq 
+        
+        try:
+            response = requests.get(self.base_url, params=params, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            articles_data = data.get("articles", [])
+        except requests.exceptions.RequestException:
+            return pq 
+        
+        for art_data in articles_data:
+            score = self._calculate_score(art_data, query)
+            published_at_dt = None
+            if art_data.get("publishedAt"):
+                try: published_at_dt = datetime.fromisoformat(art_data["publishedAt"].replace('Z', '+00:00'))
+                except ValueError: pass
+
+            article = NewsArticle(
+                title=art_data.get("title", "No Title"), description=art_data.get("description", "No Description"),
+                url=art_data.get("url", "#"), published_at=published_at_dt,
+                source_name=art_data.get("source", {}).get("name", "Unknown Source"),
+                content=art_data.get("content", ""), image_url=art_data.get("image", ""), score=score
+            )
+            pq.push(article)
+        return pq
 
 
 class AppController:
-    """Kelas Kontroler Minimal untuk Demo Minggu 1."""
     def __init__(self):
         self.auth = AuthService()
         self.history = SearchHistory()
+        self.gnews_client = GNewsAPIClient(GNEWS_API_KEY) 
         
-        self.gnews_client = None 
-        self.summarizer = None
-        self.trie = None
-        self.current_pq = None
+        self.summarizer = GeminiSummarizer()
+        self.current_pq = NewsPriorityQueue() 
 
     def get_search_history(self):
         return self.history.get_history()
+
+    def search_and_rank_news(self, query: str, max_results=10) -> List[NewsArticle]:
+        if not query:
+            return []
+        
+        self.current_pq = self.gnews_client.get_and_prioritize_news(query, max_results=max_results)
+        
+        if self.current_pq.size() > 0:
+            self.history.add_to_history(query, category="Umum") 
+        
+        return self.current_pq.get_all_articles()
+
+    def get_article_by_url(self, target_url: str) -> Optional[NewsArticle]:
+        if self.current_pq:
+            for article in self.current_pq.get_all_articles():
+                if article.url == target_url:
+                    return article
+        return None

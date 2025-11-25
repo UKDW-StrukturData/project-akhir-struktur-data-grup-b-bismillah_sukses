@@ -1,17 +1,16 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__))) 
 import streamlit as st
 import pandas as pd
-from backend_logic import AuthService, SearchHistory 
+from backend_logic import AppController, NewsArticle 
 from datetime import datetime, timedelta
 import time
-import os
-
 
 LOGO_PATH = 'logo.jpg' 
 
-if 'auth_service' not in st.session_state:
-    st.session_state.auth_service = AuthService()
-if 'history_service' not in st.session_state:
-    st.session_state.history_service = SearchHistory()
+if 'controller' not in st.session_state:
+    st.session_state.controller = AppController()
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'username' not in st.session_state:
@@ -20,14 +19,17 @@ if 'current_page' not in st.session_state:
     st.session_state.current_page = "login"
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = "Login"
+if 'search_query' not in st.session_state:
+    st.session_state.search_query = ""
+if 'current_articles' not in st.session_state:
+    st.session_state.current_articles = []
 
 
 def login_register_page():
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         st.markdown("<h1 style='text-align: center;'>GoodNews</h1>", unsafe_allow_html=True)
-        if os.path.exists(LOGO_PATH):
-            st.image(LOGO_PATH, width=200)
+        if os.path.exists(LOGO_PATH): st.image(LOGO_PATH, width=200)
         
         st.markdown("<h3 style='text-align: center;'>Login atau Daftar Akun</h3>", unsafe_allow_html=True)
         st.markdown("---")
@@ -47,7 +49,7 @@ def login_register_page():
                 if submitted:
                     with st.spinner("Memproses Login..."):
                         time.sleep(0.5)
-                        if st.session_state.auth_service.login(username, password):
+                        if st.session_state.controller.auth.login(username, password):
                             st.session_state.logged_in = True
                             st.session_state.username = username
                             st.session_state.current_page = "home"
@@ -55,7 +57,7 @@ def login_register_page():
                             time.sleep(0.5)
                             st.rerun()
                         else:
-                            st.error("Username atau Password salah.")
+                            st.error("Username atau Password salah.") 
         
         else: 
             with st.form("register_form"):
@@ -72,7 +74,7 @@ def login_register_page():
                     else:
                         with st.spinner("Mendaftarkan Akun..."):
                             time.sleep(0.5)
-                            success, message = st.session_state.auth_service.register(new_username, new_password)
+                            success, message = st.session_state.controller.auth.register(new_username, new_password)
                             if success:
                                 st.success(message + " Silakan beralih ke mode Login.")
                                 st.session_state.auth_mode = "Login" 
@@ -85,7 +87,7 @@ def history_page():
     st.title("💾 History Pencarian Offline")
     st.info("Riwayat ini dimuat dari file 'search_history.json'.")
     
-    history_data = st.session_state.history_service.get_history()
+    history_data = st.session_state.controller.history.get_history()
     
     if not history_data:
         st.warning("Belum ada riwayat pencarian yang tersimpan.")
@@ -100,16 +102,39 @@ def history_page():
     
     st.markdown("---")
     if st.button("Clear All History", help="Menghapus semua entri di file JSON lokal."):
-        st.session_state.history_service.clear_history()
+        st.session_state.controller.history.clear_history()
         st.success("Semua riwayat pencarian berhasil dihapus.")
         st.rerun()
 
 def home_page():
     st.title("GoodNews (Prioritize: News Ranker)")
-    st.header("Home/Menu - Trending Topik")
-    st.markdown("---")
-    st.info("Fitur inti **Priority Queue** dan **Integrasi API** akan dikerjakan di sini pada Minggu 2 dan 3.")
-    st.warning("Saat ini, halaman ini hanya menampilkan placeholder.")
+    st.header("Berita Prioritas Terkini")
+
+    with st.sidebar:
+        st.subheader("Pencarian Berita")
+        search_query_input = st.text_input("Masukkan Kata Kunci:", key="search_query_home")
+        
+        if st.button("CARI Berita", type='primary', use_container_width=True):
+            if search_query_input:
+                st.session_state.search_query = search_query_input
+                with st.spinner(f"Mencari dan Memprioritaskan '{st.session_state.search_query}'..."):
+                    articles = st.session_state.controller.search_and_rank_news(st.session_state.search_query, max_results=10)
+                    st.session_state.current_articles = articles 
+                    if not articles:
+                        st.error("Tidak ada berita yang ditemukan atau ada masalah dengan API Key GNews.")
+            else:
+                st.warning("Masukkan kata kunci pencarian.")
+    
+    if st.session_state.current_articles:
+        st.subheader(f"Hasil Prioritas untuk '{st.session_state.search_query}' ({len(st.session_state.current_articles)} Artikel)")
+        
+        for article in st.session_state.current_articles:
+            st.markdown(f"**[{article.score}]: [{article.title}]({article.url})**") 
+            st.caption(f"Sumber: {article.source_name} | {article.published_at.strftime('%d %b %Y %H:%M') if article.published_at else 'Tanggal N/A'}")
+            st.write(article.description)
+            st.markdown("---")
+    else:
+        st.info("Masukkan kata kunci di sidebar untuk memulai pencarian berita.")
 
 
 def main_app_layout():
