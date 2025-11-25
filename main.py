@@ -107,14 +107,14 @@ def history_page():
         st.rerun()
 
 def home_page():
-    st.title("GoodNews (Prioritize: News Ranker)")
+    st.title("GoodNews")
     st.header("Berita Prioritas Terkini")
 
     with st.sidebar:
         st.subheader("Pencarian Berita")
         search_query_input = st.text_input("Masukkan Kata Kunci:", key="search_query_home")
         
-        if st.button("CARI Berita", type='primary', use_container_width=True):
+        if st.button("Cari Berita", type='primary', use_container_width=True):
             if search_query_input:
                 st.session_state.search_query = search_query_input
                 with st.spinner(f"Mencari dan Memprioritaskan '{st.session_state.search_query}'..."):
@@ -134,7 +134,7 @@ def home_page():
             st.write(article.description)
             st.markdown("---")
     else:
-        st.info("Masukkan kata kunci di sidebar untuk memulai pencarian berita.")
+        st.info("Masukkan kata kunci di sidebar untuk mulai pencarian berita.")
 
 
 def main_app_layout():
