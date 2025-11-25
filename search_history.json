@@ -1,5 +1,10 @@
 [
     {
+        "query": "donald trump",
+        "category": "Umum",
+        "timestamp": "2025-11-25T02:06:57.634656"
+    },
+    {
         "query": "gempa",
         "category": "Umum",
         "timestamp": "2025-11-25T01:42:02.494524"
