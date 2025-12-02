@@ -94,8 +94,27 @@ def history_page():
         return
 
     df = pd.DataFrame(history_data)
-    df['timestamp'] = pd.to_datetime(df['timestamp']).dt.strftime('%d-%m-%Y %H:%M:%S')
-    df = df[['timestamp', 'query', 'category']]
+    
+    if not df.empty:
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df['date'] = df['timestamp'].dt.date
+        
+        daily_searches = df.groupby('date').size().reset_index(name='Jumlah Pencarian')
+        daily_searches['date'] = daily_searches['date'].astype(str)
+        
+        st.subheader("Aktivitas Pencarian Harian")
+        st.line_chart(daily_searches.set_index('date')) 
+        st.markdown("---")
+
+        top_queries = df['query'].value_counts().head(5).reset_index(name='Frekuensi')
+        top_queries.columns = ['Kata Kunci', 'Frekuensi']
+        st.subheader("5 Kata Kunci Teratas")
+        st.bar_chart(top_queries.set_index('Kata Kunci'))
+        st.markdown("---")
+        
+
+    df['Waktu Pencarian'] = df['timestamp'].dt.strftime('%d-%m-%Y %H:%M:%S')
+    df = df[['Waktu Pencarian', 'query', 'category']]
     df.columns = ['Waktu Pencarian', 'Kata Kunci', 'Kategori']
     
     st.dataframe(df, use_container_width=True, height=300)
@@ -118,7 +137,7 @@ def home_page():
             if search_query_input:
                 st.session_state.search_query = search_query_input
                 with st.spinner(f"Mencari dan Memprioritaskan '{st.session_state.search_query}'..."):
-                    articles = st.session_state.controller.search_and_rank_news(st.session_state.search_query, max_results=10)
+                    articles = st.session_state.controller.search_and_rank_news(st.session_state.search_query, max_results=15) 
                     st.session_state.current_articles = articles 
                     if not articles:
                         st.error("Tidak ada berita yang ditemukan atau ada masalah dengan API Key GNews.")
@@ -126,11 +145,28 @@ def home_page():
                 st.warning("Masukkan kata kunci pencarian.")
     
     if st.session_state.current_articles:
+        
+        st.subheader("Visualisasi Skor Prioritas Artikel Teratas")
+        chart_data = pd.DataFrame([
+            {'Judul Singkat': a.title[:30] + '...', 'Score': a.score} 
+            for a in st.session_state.current_articles[:10] 
+        ])
+        chart_data = chart_data.set_index('Judul Singkat') 
+        
+        st.bar_chart(chart_data)
+        st.markdown("---")
+        
+
         st.subheader(f"Hasil Prioritas untuk '{st.session_state.search_query}' ({len(st.session_state.current_articles)} Artikel)")
         
         for article in st.session_state.current_articles:
+            try:
+                published_str = article.published_at.strftime('%d %b %Y %H:%M')
+            except AttributeError:
+                published_str = 'Tanggal N/A'
+                
             st.markdown(f"**[{article.score}]: [{article.title}]({article.url})**") 
-            st.caption(f"Sumber: {article.source_name} | {article.published_at.strftime('%d %b %Y %H:%M') if article.published_at else 'Tanggal N/A'}")
+            st.caption(f"Sumber: {article.source_name} | {published_str}")
             st.write(article.description)
             st.markdown("---")
     else:
