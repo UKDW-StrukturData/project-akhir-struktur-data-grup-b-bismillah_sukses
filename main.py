@@ -61,26 +61,26 @@ def login_register_page():
         
         else: 
             with st.form("register_form"):
-                
                 new_username = st.text_input("Username Baru", key="register_username")
                 new_password = st.text_input("Password Baru", type="password", key="register_password")
                 confirm_password = st.text_input("Konfirmasi Password", type="password", key="confirm_password")
-                
+            
                 submitted_register = st.form_submit_button("DAFTAR", type='secondary')
 
-                if submitted_register:
-                    if new_password != confirm_password:
-                        st.error("Password dan Konfirmasi Password tidak cocok.")
+            if submitted_register:
+                if new_password != confirm_password:
+                    st.error("Password dan Konfirmasi Password tidak cocok.")
+                else:
+                    success = False 
+                    message = "" 
+                    with st.spinner("Mendaftarkan Akun..."):
+                        time.sleep(0.5)
+                        success, message = st.session_state.controller.auth.register(new_username, new_password)
+                    if success: 
+                        st.success(message + " Selamat, Akun anda telah terdaftar! Silakan Login.") 
+                        st.session_state.auth_mode = "Login" 
                     else:
-                        with st.spinner("Mendaftarkan Akun..."):
-                            time.sleep(0.5)
-                            success, message = st.session_state.controller.auth.register(new_username, new_password)
-                            if success:
-                                st.success(message + " Silakan beralih ke mode Login.")
-                                st.session_state.auth_mode = "Login" 
-                                st.rerun() 
-                            else:
-                                st.error(message)
+                        st.error(message)
 
 
 def history_page():
