@@ -1,27 +1,9 @@
-[
-    {
-        "query": "longsor",
-        "category": "Umum",
-        "timestamp": "2025-12-02T01:12:27.102773"
-    },
-    {
-        "query": "donald trump",
-        "category": "Umum",
-        "timestamp": "2025-11-25T02:06:57.634656"
-    },
-    {
-        "query": "gempa",
-        "category": "Umum",
-        "timestamp": "2025-11-25T01:42:02.494524"
-    },
-    {
-        "query": "Contoh: Kebijakan Energi",
-        "category": "Politik",
-        "timestamp": "2025-11-25T00:05:33.674099"
-    },
-    {
-        "query": "Contoh: AI di Indonesia",
-        "category": "Teknologi",
-        "timestamp": "2025-11-24T01:05:33.674119"
-    }
-]
+{
+    "barulagi": [
+        {
+            "query": "api",
+            "category": "Umum",
+            "timestamp": "2025-12-02T09:07:16.805644"
+        }
+    ]
+}

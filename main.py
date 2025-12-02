@@ -64,30 +64,31 @@ def login_register_page():
                 new_username = st.text_input("Username Baru", key="register_username")
                 new_password = st.text_input("Password Baru", type="password", key="register_password")
                 confirm_password = st.text_input("Konfirmasi Password", type="password", key="confirm_password")
-            
+                
                 submitted_register = st.form_submit_button("DAFTAR", type='secondary')
 
-            if submitted_register:
-                if new_password != confirm_password:
-                    st.error("Password dan Konfirmasi Password tidak cocok.")
-                else:
-                    success = False 
-                    message = "" 
-                    with st.spinner("Mendaftarkan Akun..."):
-                        time.sleep(0.5)
-                        success, message = st.session_state.controller.auth.register(new_username, new_password)
-                    if success: 
-                        st.success(message + " Selamat, Akun anda telah terdaftar! Silakan Login.") 
-                        st.session_state.auth_mode = "Login" 
+                if submitted_register:
+                    if new_password != confirm_password:
+                        st.error("Password dan Konfirmasi Password tidak cocok.")
                     else:
-                        st.error(message)
+                        success = False 
+                        message = "" 
+                        with st.spinner("Mendaftarkan Akun..."):
+                            time.sleep(0.5)
+                            success, message = st.session_state.controller.auth.register(new_username, new_password)
+                        if success: 
+                            st.success(message + " Selamat, Akun anda telah terdaftar! Silakan Login.") 
+                            st.session_state.auth_mode = "Login" 
+                        else:
+                            st.error(message)
 
 
 def history_page():
+    current_username = st.session_state.username
     st.title("History Pencarian Offline")
-    st.info("Riwayat ini dimuat dari file 'search_history.json'.")
+    st.info(f"Riwayat ini dimuat dari file 'search_history.json' untuk user: **{current_username}**.")
     
-    history_data = st.session_state.controller.history.get_history()
+    history_data = st.session_state.controller.get_search_history(current_username)
     
     if not history_data:
         st.warning("Belum ada riwayat pencarian yang tersimpan.")
@@ -121,7 +122,7 @@ def history_page():
     
     st.markdown("---")
     if st.button("Clear All History", help="Menghapus semua entri di file JSON lokal."):
-        st.session_state.controller.history.clear_history()
+        st.session_state.controller.clear_search_history(current_username)
         st.success("Semua riwayat pencarian berhasil dihapus.")
         st.rerun()
 
@@ -137,7 +138,12 @@ def home_page():
             if search_query_input:
                 st.session_state.search_query = search_query_input
                 with st.spinner(f"Mencari dan Memprioritaskan '{st.session_state.search_query}'..."):
-                    articles = st.session_state.controller.search_and_rank_news(st.session_state.search_query, max_results=15) 
+                    # --- Perubahan untuk menggunakan username saat ini ---
+                    articles = st.session_state.controller.search_and_rank_news(
+                        st.session_state.username, # PENTING: Passing username
+                        st.session_state.search_query, 
+                        max_results=15
+                    ) 
                     st.session_state.current_articles = articles 
                     if not articles:
                         st.error("Tidak ada berita yang ditemukan atau ada masalah dengan API Key GNews.")
@@ -156,7 +162,6 @@ def home_page():
         st.bar_chart(chart_data)
         st.markdown("---")
         
-
         st.subheader(f"Hasil Prioritas untuk '{st.session_state.search_query}' ({len(st.session_state.current_articles)} Artikel)")
         
         for article in st.session_state.current_articles:

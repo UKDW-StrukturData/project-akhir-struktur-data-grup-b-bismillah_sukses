@@ -86,27 +86,47 @@ class AuthService:
 class SearchHistory:
     def __init__(self, history_file="search_history.json"):
         self.history_file = history_file
-        self.history: List[Dict[str, Any]] = self._load_history()
-        if not self.history:
-            self.history.append({"query": "Contoh: Kebijakan Energi", "category": "Politik", "timestamp": (datetime.now() - timedelta(hours=1)).isoformat()})
-            self.history.append({"query": "Contoh: AI di Indonesia", "category": "Teknologi", "timestamp": (datetime.now() - timedelta(days=1)).isoformat()})
-            self._save_history() 
+        # self.history diubah menjadi dictionary {username: [list_riwayat]}
+        self.history: Dict[str, List[Dict[str, Any]]] = self._load_history()
+    
     def _load_history(self):
+        """Memuat data riwayat multi-user dari file JSON."""
         if os.path.exists(self.history_file):
             try:
                 with open(self.history_file, "r") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    return data if isinstance(data, dict) else {}
             except Exception:
                 return {}
         return {}
+        
     def _save_history(self):
+        """Menyimpan seluruh dictionary riwayat multi-user."""
         with open(self.history_file, "w") as f: json.dump(self.history, f, indent=4)
-    def add_to_history(self, query: str, category: str = None):
+        
+    def add_to_history(self, username: str, query: str, category: str = None):
+        """Menambahkan riwayat ke user tertentu."""
+        if not username: return
+        
+        if username not in self.history:
+            self.history[username] = []
+            
+        user_history = self.history[username]
         entry = {"query": query, "category": category, "timestamp": datetime.now().isoformat()}
-        if not any(e["query"].lower() == query.lower() for e in self.history):
-            self.history.insert(0, entry); self._save_history()
-    def get_history(self) -> List[Dict[str, Any]]: return self.history
-    def clear_history(self): self.history = []; self._save_history()
+        
+        if not any(e["query"].lower() == query.lower() for e in user_history):
+            user_history.insert(0, entry) 
+            self._save_history()
+            
+    def get_history(self, username: str) -> List[Dict[str, Any]]: 
+        """Mengambil riwayat untuk user tertentu."""
+        return self.history.get(username, [])
+        
+    def clear_history(self, username: str): 
+        """Menghapus riwayat untuk user tertentu."""
+        if username in self.history:
+            self.history[username] = []
+            self._save_history()
 
 
 class GNewsAPIClient:
@@ -173,17 +193,20 @@ class AppController:
         self.summarizer = GeminiSummarizer()
         self.current_pq = NewsPriorityQueue() 
 
-    def get_search_history(self):
-        return self.history.get_history()
+    def get_search_history(self, username: str):
+        return self.history.get_history(username)
 
-    def search_and_rank_news(self, query: str, max_results=10) -> List[NewsArticle]:
+    def clear_search_history(self, username: str):
+        self.history.clear_history(username)
+
+    def search_and_rank_news(self, username: str, query: str, max_results=10) -> List[NewsArticle]:
         if not query:
             return []
         
         self.current_pq = self.gnews_client.get_and_prioritize_news(query, max_results=max_results)
         
         if self.current_pq.size() > 0:
-            self.history.add_to_history(query, category="Umum") 
+            self.history.add_to_history(username, query, category="Umum") 
         
         return self.current_pq.get_all_articles()
 
