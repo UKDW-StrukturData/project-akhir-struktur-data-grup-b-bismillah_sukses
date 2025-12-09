@@ -5,35 +5,19 @@ import os
 import heapq 
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
-from bs4 import BeautifulSoup 
+from bs4 import BeautifulSoup
+import google.generativeai as genai
 
-try:
-    from google import genai
-except ImportError:
-
-    genai = None
-    APIError = type('APIError', (Exception,), {})
 
 GNEWS_API_KEY = os.environ.get("GNEWS_API_KEY", "9fa5c1d656b1606ccde69f242f2c1b26") 
 GEMINI_API_KEY = st.secrets["GEMINI_API"]
+genai.configure(api_key=GEMINI_API_KEY)
 
 class GeminiSummarizer:
     def __init__(self):
-        self.client = None
-        self.model = 'gemini-2.5-flash'
-        if genai and GEMINI_API_KEY:
-            try:
-                self.client = genai.Client(api_key=GEMINI_API_KEY)
-            except Exception as e:
-                print(f"Peringatan: Gagal menginisialisasi klien Gemini: {e}")
-                self.client = None
+        self.model = genai.GenerativeModel("models/gemini-2.5-flash")
 
     def summarize_text(self, text_content: str) -> str:
-        # if not self.client:
-        #     return "ERROR: Gemini API Key tidak ditemukan atau Summarizer tidak aktif. Silakan setel GEMINI_API_KEY."
-        
-        # if not text_content or text_content.startswith("[Error"):
-        #     return "Gagal membuat ringkasan: Konten artikel tidak tersedia atau gagal di-scrape."
             
         safe_text = text_content[:15000] 
         
@@ -44,15 +28,7 @@ class GeminiSummarizer:
         )
 
 
-        response = self.client.models.generate_content(
-            model=self.model,
-            contents=prompt
-        )
-        return response.text
-        # except APIError as e:
-        #     return f"ERROR API Gemini: Terjadi kesalahan saat memproses permintaan. ({e})"
-        # except Exception as e:
-        #     return f"ERROR: Terjadi kesalahan saat meringkas. ({e})"
+        response = self.model.generate_content(prompt)
 
 
 
