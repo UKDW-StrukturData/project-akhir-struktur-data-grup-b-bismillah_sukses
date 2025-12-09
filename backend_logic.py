@@ -1,4 +1,5 @@
 import requests 
+import streamlit as st
 import json
 import os
 import heapq 
@@ -15,7 +16,7 @@ except ImportError:
     APIError = type('APIError', (Exception,), {})
 
 GNEWS_API_KEY = os.environ.get("GNEWS_API_KEY", "9fa5c1d656b1606ccde69f242f2c1b26") 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyCMxkLhZdKz8BmaGJY3PTYTgOlA6N-iwKw")
+GEMINI_API_KEY = st.secrets["GEMINI_API"]
 
 class GeminiSummarizer:
     def __init__(self):
