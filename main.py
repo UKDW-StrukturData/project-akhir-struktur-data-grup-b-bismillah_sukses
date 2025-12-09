@@ -7,7 +7,6 @@ from backend_logic import AppController, NewsArticle
 from datetime import datetime, timedelta
 import time
 
-# --- STATE MANAGEMENT & INITIALIZATION ---
 LOGO_PATH = 'logo.jpg' 
 
 if 'controller' not in st.session_state:
@@ -27,7 +26,6 @@ if 'current_articles' not in st.session_state:
 
 @st.cache_data
 def convert_df_to_csv(df):
-    """Mengubah DataFrame ke format CSV untuk diunduh."""
     return df.to_csv(index=False).encode('utf-8')
 
 
@@ -102,7 +100,6 @@ def history_page():
     df = pd.DataFrame(history_data)
     
     if not df.empty:
-        # VISUALISASI 2 (Tambahan): Aktivitas Harian & Top Queries
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df['date'] = df['timestamp'].dt.date
         
@@ -123,7 +120,6 @@ def history_page():
     df_display = df[['Waktu Pencarian', 'query', 'category']]
     df_display.columns = ['Waktu Pencarian', 'Kata Kunci', 'Kategori']
     
-    # EXPORT LAPORAN RIWAYAT (CSV)
     csv_history = convert_df_to_csv(df_display)
     st.download_button(
         label="Download Riwayat Pencarian (CSV)",
@@ -141,7 +137,6 @@ def history_page():
         st.success("Semua riwayat pencarian berhasil dihapus.")
         st.rerun()
 
-# --- Helper function untuk membuat konten Laporan HTML/PDF (untuk semua artikel) ---
 def generate_report_content(articles, query):
     """Membuat konten HTML (Offline Report) untuk export semua artikel."""
     html_content = f"""
@@ -182,7 +177,6 @@ def generate_report_content(articles, query):
     html_content += "</body></html>"
     return html_content
 
-# --- Helper function BARU untuk membuat laporan HTML satu artikel (dengan summary) ---
 def generate_single_report_content(article: NewsArticle, summary: str):
     """Membuat konten HTML untuk satu artikel dengan Ringkasan AI."""
     published_str = article.published_at.strftime('%d %b %Y %H:%M') if article.published_at else 'Tanggal N/A'
@@ -221,7 +215,6 @@ def generate_single_report_content(article: NewsArticle, summary: str):
     </html>
     """
     return html_content
-# --------------------------------------------------------------------------
 
 
 def home_page():
@@ -247,17 +240,14 @@ def home_page():
             else:
                 st.warning("Masukkan kata kunci pencarian.")
     
-    # --- Logic Memuat Default News (jika tidak ada pencarian sebelumnya) ---
     if not st.session_state.current_articles and st.session_state.controller.current_pq.size() > 0:
         st.session_state.current_articles = st.session_state.controller.current_pq.get_all_articles()
-        if not st.session_state.search_query: # Hanya atur query default jika belum ada
+        if not st.session_state.search_query: 
             st.session_state.search_query = "Berita Populer (Default)"
-    # -----------------------------------------------------------------------
 
     
     if st.session_state.current_articles:
         
-        # VISUALISASI 1: Skor Prioritas (Bar Chart) - Bukti Max Heap
         st.subheader("Visualisasi Skor Prioritas Artikel Teratas")
         chart_data = pd.DataFrame([
             {'Judul Singkat': a.title[:30] + '...', 'Score': a.score} 
@@ -267,7 +257,6 @@ def home_page():
         st.bar_chart(chart_data)
         st.markdown("---")
         
-        # EXPORT LAPORAN SEMUA ARTIKEL
         col_csv, col_pdf = st.columns(2)
         
         article_list_for_csv = [{
@@ -292,7 +281,6 @@ def home_page():
             )
 
         with col_pdf:
-            # Mengubah label untuk mencerminkan cetak ke PDF
             st.download_button(
                 label="Download Laporan PDF (Cetak)",
                 data=report_data.encode('utf-8'), 
@@ -302,7 +290,6 @@ def home_page():
                 use_container_width=True
             )
         st.markdown("---")
-        # ---------------------------------------------
 
         st.subheader(f"Hasil Prioritas untuk '{st.session_state.search_query}' ({len(st.session_state.current_articles)} Artikel)")
         
@@ -318,12 +305,10 @@ def home_page():
                 st.text("Konten (Offline Snippet): " + article.content[:300] + "...")
             
             
-            # --- LOGIC & TOMBOL RINGKASAN AI DAN DOWNLOAD SATU ARTIKEL ---
             col_sum, col_down = st.columns([1, 1])
             summary_key = f"summary_{article.url}"
             
             with col_sum:
-                # Tombol Ringkas dengan AI
                 if st.button("Ringkas dengan AI", key=f"summarize_{article.url}", type='secondary', use_container_width=True):
                     article_to_summarize = st.session_state.controller.get_article_by_url(article.url)
                     if article_to_summarize:
@@ -332,13 +317,11 @@ def home_page():
                             st.session_state[summary_key] = summary
                         st.rerun() 
             
-            # 2. TAMPILKAN RINGKASAN DAN TOMBOL DOWNLOAD TUNGGAL
             if summary_key in st.session_state and st.session_state[summary_key]:
                 with st.expander("⬇️ Hasil Ringkasan AI", expanded=True):
                     summary_text = st.session_state[summary_key]
                     st.success(summary_text)
 
-                    # --- TOMBOL DOWNLOAD SATU ARTIKEL (Hanya muncul setelah Ringkasan dibuat) ---
                     report_single = generate_single_report_content(article, summary_text)
                     
                     with col_down:

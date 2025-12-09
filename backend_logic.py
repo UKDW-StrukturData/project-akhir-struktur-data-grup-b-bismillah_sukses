@@ -5,23 +5,19 @@ import heapq
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from bs4 import BeautifulSoup 
-# --- IMPORT GEMINI ---
+
 try:
     from google import genai
     from google.genai.errors import APIError 
 except ImportError:
-    # Handle jika library belum diinstal
+
     genai = None
     APIError = type('APIError', (Exception,), {})
 
-# --- KONFIGURASI API ---
-# PENTING: Ganti "YOUR_GNEWS_API_KEY_HERE" dengan kunci yang valid!
 GNEWS_API_KEY = os.environ.get("GNEWS_API_KEY", "9fa5c1d656b1606ccde69f242f2c1b26") 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") 
-
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyCMxkLhZdKz8BmaGJY3PTYTgOlA6N-iwKw")
 
 class GeminiSummarizer:
-    """Class untuk merangkum konten menggunakan Gemini API."""
     def __init__(self):
         self.client = None
         self.model = 'gemini-2.5-flash'
@@ -33,7 +29,6 @@ class GeminiSummarizer:
                 self.client = None
 
     def summarize_text(self, text_content: str) -> str:
-        """Melakukan ringkasan pada teks artikel."""
         if not self.client:
             return "ERROR: Gemini API Key tidak ditemukan atau Summarizer tidak aktif. Silakan setel GEMINI_API_KEY."
         
@@ -60,12 +55,8 @@ class GeminiSummarizer:
             return f"ERROR: Terjadi kesalahan saat meringkas. ({e})"
 
 
-# ====================================================================
-#                          STRUKTUR DATA (MAX HEAP)
-# ====================================================================
 
 class NewsArticle:
-    """Representasi artikel berita untuk Priority Queue."""
     def __init__(self, title, description, url, published_at, source_name, content, image_url="", score=0):
         self.title = title
         self.description = description
@@ -77,7 +68,6 @@ class NewsArticle:
         self.score = score
 
     def __lt__(self, other):
-        """Max Heap: Skor lebih tinggi dianggap 'lebih kecil' (prioritas lebih tinggi)."""
         return self.score > other.score
 
     def to_dict(self):
@@ -88,7 +78,6 @@ class NewsArticle:
         }
 
 class NewsPriorityQueue:
-    """Priority Queue (Max Heap) untuk artikel berita."""
     def __init__(self):
         self._heap = [] 
 
@@ -99,20 +88,13 @@ class NewsPriorityQueue:
         return len(self._heap)
 
     def get_all_articles(self) -> List[NewsArticle]:
-        """Mengembalikan semua artikel dalam urutan prioritas tanpa mengubah heap."""
         temp_list = [heapq.heappop(self._heap) for _ in range(len(self._heap))]
         all_articles = temp_list.copy()
         for article in temp_list:
             heapq.heappush(self._heap, article)
         return all_articles
 
-
-# ====================================================================
-#                        SERVICE & LOGIC
-# ====================================================================
-
 class AuthService:
-    """Layanan otentikasi sederhana dengan penyimpanan pengguna di file JSON."""
     def __init__(self, users_file="users.json"):
         self.users_file = users_file
         self.users = self._load_users()
@@ -175,15 +157,12 @@ class SearchHistory:
 
 
 class GNewsAPIClient:
-    """Klien untuk koneksi, scraping, dan pemrosesan data dari GNews.io."""
     def __init__(self, api_key):
         self.api_key = api_key
         self.base_url = "https://gnews.io/api/v4/search"
 
     def _scrape_article_content(self, url: str) -> str:
-        """Mengambil teks isi artikel dari URL sumber (untuk report offline)."""
         try:
-            # Menggunakan header umum untuk menghindari pemblokiran
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
             response = requests.get(url, timeout=10, headers=headers)
             response.raise_for_status()
@@ -253,10 +232,7 @@ class GNewsAPIClient:
             pq.push(article)
         return pq
 
-
-# --- APP CONTROLLER (Final dengan Default Load Logic) ---
 class AppController:
-    """Mengelola semua layanan backend untuk Streamlit."""
     def __init__(self):
         self.auth = AuthService()
         self.history = SearchHistory()
@@ -267,7 +243,6 @@ class AppController:
         self.load_default_news()
 
     def load_default_news(self, query="Berita Indonesia"):
-        """Memuat berita default (populer) jika belum ada hasil."""
         if self.current_pq.size() == 0:
             print(f"Memuat berita default untuk '{query}'...")
             self.current_pq = self.gnews_client.get_and_prioritize_news(query, max_results=10)
