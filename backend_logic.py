@@ -9,7 +9,6 @@ from bs4 import BeautifulSoup
 
 try:
     from google import genai
-    from google.genai.errors import APIError 
 except ImportError:
 
     genai = None
@@ -30,8 +29,8 @@ class GeminiSummarizer:
                 self.client = None
 
     def summarize_text(self, text_content: str) -> str:
-        if not self.client:
-            return "ERROR: Gemini API Key tidak ditemukan atau Summarizer tidak aktif. Silakan setel GEMINI_API_KEY."
+        # if not self.client:
+        #     return "ERROR: Gemini API Key tidak ditemukan atau Summarizer tidak aktif. Silakan setel GEMINI_API_KEY."
         
         if not text_content or text_content.startswith("[Error"):
             return "Gagal membuat ringkasan: Konten artikel tidak tersedia atau gagal di-scrape."
