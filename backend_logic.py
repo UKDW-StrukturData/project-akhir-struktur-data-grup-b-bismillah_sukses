@@ -30,6 +30,9 @@ class GeminiSummarizer:
 
         response = self.model.generate_content(prompt)
 
+        return response.text
+        #     return f"ERROR: Terjadi kesalahan saat meringkas. ({e})"
+
 
 
 class NewsArticle:
