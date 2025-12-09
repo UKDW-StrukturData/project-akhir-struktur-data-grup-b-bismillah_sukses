@@ -32,8 +32,8 @@ class GeminiSummarizer:
         # if not self.client:
         #     return "ERROR: Gemini API Key tidak ditemukan atau Summarizer tidak aktif. Silakan setel GEMINI_API_KEY."
         
-        if not text_content or text_content.startswith("[Error"):
-            return "Gagal membuat ringkasan: Konten artikel tidak tersedia atau gagal di-scrape."
+        # if not text_content or text_content.startswith("[Error"):
+        #     return "Gagal membuat ringkasan: Konten artikel tidak tersedia atau gagal di-scrape."
             
         safe_text = text_content[:15000] 
         
@@ -43,16 +43,16 @@ class GeminiSummarizer:
             f"TEKS ARTIKEL: {safe_text}"
         )
 
-        try:
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt
-            )
-            return response.text
-        except APIError as e:
-            return f"ERROR API Gemini: Terjadi kesalahan saat memproses permintaan. ({e})"
-        except Exception as e:
-            return f"ERROR: Terjadi kesalahan saat meringkas. ({e})"
+
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=prompt
+        )
+        return response.text
+        # except APIError as e:
+        #     return f"ERROR API Gemini: Terjadi kesalahan saat memproses permintaan. ({e})"
+        # except Exception as e:
+        #     return f"ERROR: Terjadi kesalahan saat meringkas. ({e})"
 
 
 
