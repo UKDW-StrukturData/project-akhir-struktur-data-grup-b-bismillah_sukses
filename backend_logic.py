@@ -10,7 +10,7 @@ import google.generativeai as genai
 
 
 GNEWS_API_KEY = os.environ.get("GNEWS_API_KEY", "9fa5c1d656b1606ccde69f242f2c1b26") 
-GEMINI_API_KEY = st.secrets["GEMINI_API"]
+GEMINI_API_KEY = st.secrets["API_KEY"]
 genai.configure(api_key=GEMINI_API_KEY)
 
 class GeminiSummarizer:
